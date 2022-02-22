@@ -141,6 +141,7 @@ class EventPushActionsStoreTestCase(HomeserverTestCase):
                     "m.read",
                     user_id=user_id,
                     event_ids=[f"$test{stream}:example.com"],
+                    thread_id=None,
                     data={},
                 )
             )
