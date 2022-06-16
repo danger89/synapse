@@ -60,7 +60,7 @@ class EventPushActionsStoreTestCase(HomeserverTestCase):
         last_read_stream_ordering = [0]
 
         def _assert_counts(noitf_count: int, highlight_count: int) -> None:
-            counts = self.get_success(
+            counts, thread_counts = self.get_success(
                 self.store.db_pool.runInteraction(
                     "",
                     self.store._get_unread_counts_by_pos_txn,
@@ -77,6 +77,7 @@ class EventPushActionsStoreTestCase(HomeserverTestCase):
                     highlight_count=highlight_count,
                 ),
             )
+            self.assertEqual(thread_counts, {})
 
         def _inject_actions(stream: int, action: list) -> None:
             event = Mock()
