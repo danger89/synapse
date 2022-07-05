@@ -58,6 +58,7 @@ class EventPushActionsStoreTestCase(HomeserverTestCase):
         user_id = "@user1235:test"
 
         last_read_stream_ordering = [0]
+        desc = ["A"]
 
         def _assert_counts(noitf_count: int, highlight_count: int) -> None:
             counts, thread_counts = self.get_success(
@@ -121,6 +122,10 @@ class EventPushActionsStoreTestCase(HomeserverTestCase):
                 )
             )
 
+            self.get_success(
+                self.store.db_pool.runInteraction("foo", f, "_inject_actions")
+            )
+
         def _rotate(stream: int) -> None:
             self.get_success(
                 self.store.db_pool.runInteraction(
@@ -129,9 +134,17 @@ class EventPushActionsStoreTestCase(HomeserverTestCase):
             )
 
             self.get_success(
+                self.store.db_pool.runInteraction("foo", f, "_rotate (receipts)")
+            )
+
+            self.get_success(
                 self.store.db_pool.runInteraction(
                     "rotate-notifs", self.store._rotate_notifs_before_txn, stream
                 )
+            )
+
+            self.get_success(
+                self.store.db_pool.runInteraction("foo", f, "_rotate (notifs)")
             )
 
         def _mark_read(stream: int, depth: int) -> None:
@@ -146,6 +159,28 @@ class EventPushActionsStoreTestCase(HomeserverTestCase):
                     data={},
                 )
             )
+
+            self.get_success(self.store.db_pool.runInteraction("foo", f, "_mark_read"))
+
+        def f(txn, func):
+            print(f"\n{desc[0]}: {func}")
+            txn.execute("SELECT * FROM event_push_summary")
+            print(f"event_push_summary: {[x[:6] for x in txn.fetchall()]}")
+
+            txn.execute("SELECT * FROM event_push_actions")
+            print(f"event_push_actions: {[x[:10] for x in txn.fetchall()]}")
+
+            txn.execute("SELECT * FROM event_push_actions_staging")
+            print(f"event_push_actions_staging: {[x[:6] for x in txn.fetchall()]}")
+
+            txn.execute("SELECT * FROM event_push_summary_last_receipt_stream_id")
+            print(f"event_push_summary_last_receipt_stream_id: {[x for x in txn.fetchall()]}")
+
+            txn.execute("SELECT * FROM event_push_summary_stream_ordering")
+            print(f"event_push_summary_stream_ordering: {[x for x in txn.fetchall()]}")
+
+            desc[0] = chr(ord(desc[0]) + 1)
+            print()
 
         _assert_counts(0, 0)
         _inject_actions(1, PlAIN_NOTIF)
@@ -166,6 +201,7 @@ class EventPushActionsStoreTestCase(HomeserverTestCase):
         _assert_counts(0, 0)
 
         _inject_actions(6, PlAIN_NOTIF)
+        _assert_counts(1, 0)
         _rotate(6)
         _assert_counts(1, 0)
 
