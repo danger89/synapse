@@ -238,6 +238,13 @@ class EventPushActionsWorkerStore(ReceiptsWorkerStore, StreamWorkerStore, SQLBas
     ) -> Tuple[NotifCounts, Dict[str, NotifCounts]]:
         """Get the number of unread messages for a user/room that have happened
         since the given stream ordering.
+
+        Returns:
+            A tuple of:
+                The unread messages for the main timeline
+
+                A dictionary of thread ID to unread messages for that thread.
+                Only contains threads with unread messages.
         """
 
         counts = NotifCounts()
@@ -275,7 +282,8 @@ class EventPushActionsWorkerStore(ReceiptsWorkerStore, StreamWorkerStore, SQLBas
                 counts = NotifCounts(
                     notify_count=notif_count, unread_count=unread_count
                 )
-            else:
+            # TODO Delete zeroed out threads completely from the database.
+            elif notif_count or unread_count:
                 thread_counts[thread_id] = NotifCounts(
                     notify_count=notif_count, unread_count=unread_count
                 )
@@ -299,8 +307,13 @@ class EventPushActionsWorkerStore(ReceiptsWorkerStore, StreamWorkerStore, SQLBas
         for highlight_count, thread_id in rows:
             if not thread_id:
                 counts.highlight_count += highlight_count
-            else:
-                thread_counts[thread_id].highlight_count += highlight_count
+            elif highlight_count:
+                if thread_id in thread_counts:
+                    thread_counts[thread_id].highlight_count += highlight_count
+                else:
+                    thread_counts[thread_id] = NotifCounts(
+                        notify_count=0, unread_count=0, highlight_count=highlight_count
+                    )
 
         # Finally we need to count push actions that aren't included in the
         # summary returned above, e.g. recent events that haven't been
