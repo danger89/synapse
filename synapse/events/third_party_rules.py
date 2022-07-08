@@ -564,7 +564,7 @@ class ThirdPartyEventRules:
         for callback in self._on_threepid_unbind_callbacks:
             try:
                 res = await callback(user_id, medium, address, identity_server)
-                if (res == self.STOP_UNBIND):
+                if res == self.STOP_UNBIND:
                     return self.STOP_UNBIND
             except Exception as e:
                 logger.exception(
