@@ -155,6 +155,9 @@ class ThirdPartyEventRules:
     behaviours.
     """
 
+    CONTINUE_UNBIND: Literal["CONTINUE_UNBIND"] = "CONTINUE_UNBIND"
+    STOP_UNBIND: Literal["STOP_UNBIND"] = "STOP_UNBIND"
+
     def __init__(self, hs: "HomeServer"):
         self.third_party_rules = None
 
@@ -561,13 +564,13 @@ class ThirdPartyEventRules:
         for callback in self._on_threepid_unbind_callbacks:
             try:
                 res = await callback(user_id, medium, address, identity_server)
-                if (res == Literal["STOP_UNBIND"]):
-                    return Literal["STOP_UNBIND"]
+                if (res == self.STOP_UNBIND):
+                    return self.STOP_UNBIND
             except Exception as e:
                 logger.exception(
                     "Failed to run module API callback %s: %s", callback, e
                 )
                 # or do we want to throw instead ?
-                return Literal["STOP_UNBIND"]
+                return self.STOP_UNBIND
 
-        return Literal["CONTINUE_UNBIND"]
+        return self.CONTINUE_UNBIND
