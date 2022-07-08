@@ -560,10 +560,14 @@ class ThirdPartyEventRules:
         """
         for callback in self._on_threepid_unbind_callbacks:
             try:
-                return await callback(user_id, medium, address, identity_server)
+                res = await callback(user_id, medium, address, identity_server)
+                if (res == Literal["STOP_UNBIND"]):
+                    return Literal["STOP_UNBIND"]
             except Exception as e:
                 logger.exception(
                     "Failed to run module API callback %s: %s", callback, e
                 )
                 # or do we want to throw instead ?
                 return Literal["STOP_UNBIND"]
+
+        return Literal["CONTINUE_UNBIND"]
