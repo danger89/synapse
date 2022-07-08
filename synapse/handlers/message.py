@@ -1134,6 +1134,9 @@ class EventCreationHandler:
             context = await self.state.compute_event_context(
                 event,
                 state_ids_before_event=state_map_for_event,
+                # TODO(faster_joins): check how MSC2716 works and whether we can have
+                #                     partial state here
+                partial_state=False,
             )
         else:
             context = await self.state.compute_event_context(event)
