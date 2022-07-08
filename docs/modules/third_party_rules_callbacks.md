@@ -265,6 +265,23 @@ server_.
 
 If multiple modules implement this callback, Synapse runs them all in order.
 
+### `on_threepid_unbind`
+
+_First introduced in Synapse v1.63.0_
+
+```python
+async def on_threepid_unbind(
+    user_id: str, medium: str, address: str, identity_server: str
+) -> Union[Literal["CONTINUE_UNBIND"], Literal["STOP_UNBIND"]]:
+```
+
+Called before a threepid association is removed.
+
+Note that this callback is called before an association is deleted on the
+local homeserver. If CONTINUE_UNBIND is returned unbind will be called
+on the identity server that was used during registration, if STOP_UNBIND
+is returned it will not do so and stop calling other handlers too.
+
 ## Example
 
 The example below is a module that implements the third-party rules callback

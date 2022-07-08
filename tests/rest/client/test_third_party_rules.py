@@ -937,3 +937,58 @@ class ThirdPartyRulesTestCase(unittest.FederatingHomeserverTestCase):
 
         # Check that the mock was called with the right parameters
         self.assertEqual(args, (user_id, "email", "foo@example.com"))
+
+    def test_on_threepid_unbind(self) -> None:
+        """Tests that the on_threepid_unbind module callback is called correctly before
+        removing a 3PID mapping.
+        """
+        # Register a mocked callback.
+        threepid_unbind_mock = Mock(return_value=make_awaitable(None))
+        third_party_rules = self.hs.get_third_party_event_rules()
+        third_party_rules._on_threepid_unbind_callbacks.append(threepid_unbind_mock)
+
+        # Register an admin user.
+        self.register_user("admin", "password", admin=True)
+        admin_tok = self.login("admin", "password")
+
+        # Also register a normal user we can modify.
+        user_id = self.register_user("user", "password")
+
+        # Add a 3PID to the user.
+        self.make_request(
+            "PUT",
+            "/_synapse/admin/v2/users/%s" % user_id,
+            {
+                "threepids": [
+                    {
+                        "medium": "email",
+                        "address": "foo@example.com",
+                    },
+                ],
+            },
+            access_token=admin_tok,
+        )
+        self.assertEqual(channel.code, 200, channel.json_body)
+
+        # Remove the 3PID mapping.
+        self.make_request(
+            "DELETE",
+            "/_synapse/admin/v2/users/%s" % user_id,
+            {
+                "threepids": [
+                    {
+                        "medium": "email",
+                        "address": "foo@example.com",
+                    },
+                ],
+            },
+            access_token=admin_tok,
+        )
+        self.assertEqual(channel.code, 200, channel.json_body)
+
+        # Check that the mock was called once.
+        threepid_unbind_mock.assert_called_once()
+        args = threepid_unbind_mock.call_args[0]
+
+        # Check that the mock was called with the right parameters
+        self.assertEqual(args, (user_id, "email", "foo@example.com"))
