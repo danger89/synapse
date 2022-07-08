@@ -955,7 +955,7 @@ class ThirdPartyRulesTestCase(unittest.FederatingHomeserverTestCase):
         user_id = self.register_user("user", "password")
 
         # Add a 3PID to the user.
-        self.make_request(
+        channel = self.make_request(
             "PUT",
             "/_synapse/admin/v2/users/%s" % user_id,
             {
@@ -971,7 +971,7 @@ class ThirdPartyRulesTestCase(unittest.FederatingHomeserverTestCase):
         self.assertEqual(channel.code, 200, channel.json_body)
 
         # Remove the 3PID mapping.
-        self.make_request(
+        channel = self.make_request(
             "DELETE",
             "/_synapse/admin/v2/users/%s" % user_id,
             {

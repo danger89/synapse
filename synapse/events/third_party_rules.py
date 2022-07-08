@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, List, Optional, Tuple, Union
+
+# `Literal` appears with Python 3.8.
+from typing_extensions import Literal
 
 from twisted.internet.defer import CancelledError
 
@@ -45,7 +48,7 @@ CHECK_CAN_DEACTIVATE_USER_CALLBACK = Callable[[str, bool], Awaitable[bool]]
 ON_PROFILE_UPDATE_CALLBACK = Callable[[str, ProfileInfo, bool, bool], Awaitable]
 ON_USER_DEACTIVATION_STATUS_CHANGED_CALLBACK = Callable[[str, bool, bool], Awaitable]
 ON_THREEPID_BIND_CALLBACK = Callable[[str, str, str], Awaitable]
-ON_THREEPID_UNBIND_CALLBACK = Callable[[str, str, str], Awaitable]
+ON_THREEPID_UNBIND_CALLBACK = Callable[[str, str, str, str], Awaitable[Union]]
 
 
 def load_legacy_third_party_event_rules(hs: "HomeServer") -> None:
